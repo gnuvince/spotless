@@ -1,0 +1,61 @@
+object ::= "{" "}"
+object ::= "{" members "}"
+
+members ::= pair
+members ::= pair "," members
+
+pair ::= string ":" value
+
+array ::= "[" "]"
+array ::= "[" elements "]"
+
+elements ::= value
+elements ::= value "," elements
+
+value ::= string
+value ::= number
+value ::= object
+value ::= array
+value ::= "true"
+value ::= "false"
+value ::= "null"
+
+string ::= '"' '"'
+string ::= '"' chars '"'
+
+chars ::= char
+chars ::= char chars
+
+char ::= any-Unicode-character-except-"-or-\-or-control-character
+char ::= '\"'
+char ::= '\\'
+char ::= '\/'
+char ::= '\b'
+char ::= '\f'
+char ::= '\n'
+char ::= '\r'
+char ::= '\t'
+char ::= '\u' four-hex-digits
+
+number ::= int
+number ::= int frac
+number ::= int exp
+number ::= int frac exp
+
+int ::= '0'
+int ::= digit digits
+int ::= '-' digit digits
+
+frac ::= '.' digits
+
+exp ::= e digits
+
+digits ::= digit
+digits ::= digit digits
+
+e ::= 'e'
+e ::= 'e+'
+e ::= 'e-'
+e ::= 'E'
+e ::= 'E+'
+e ::= 'E-'

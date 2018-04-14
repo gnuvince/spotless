@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "common.h"
 #include "scanner.h"
 
 #define BUFSIZE 65536

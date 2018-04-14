@@ -1,6 +1,8 @@
 #ifndef SPOTLESS_SCANNER_H
 #define SPOTLESS_SCANNER_H
 
+#include "common.h"
+
 enum Token {
     TOK_NONE,
     TOK_EOF,
@@ -23,17 +25,12 @@ enum Token {
     TOK_STRING,
 };
 
-enum ScanResult {
-    RESULT_OK,
-    RESULT_FAIL
-};
-
 struct Scanner {
     enum Token curr_token;
     char *stream;
     const char *err_msg;
 };
 
-enum ScanResult next(struct Scanner *);
+enum Result next(struct Scanner *);
 
 #endif

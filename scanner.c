@@ -1,6 +1,16 @@
+/*
+ * Useful invariants to know:
+ *   - after a scan_*() function successfully returns,
+ *     scanner->stream points to the first character after
+ *     the sub-string that generated scanner->curr_token;
+ *   - next() skips blanks (using isspace()) before dispatching;
+ *     scanner->stream points to the first non-blank character
+ *     of the rest of the input.
+ */
 #include <ctype.h>
 #include <stdbool.h>
 
+#include "common.h"
 #include "scanner.h"
 
 #define NON_ZERO_DIGIT      \
@@ -23,7 +33,7 @@ void skip_spaces(struct Scanner *scanner) {
         (scanner->stream)++;
 }
 
-enum ScanResult scan_keyword(
+enum Result scan_keyword(
     struct Scanner *scanner,
     char *keyword,
     enum Token tok,
@@ -39,7 +49,7 @@ enum ScanResult scan_keyword(
     return RESULT_OK;
 }
 
-enum ScanResult scan_integer(struct Scanner *scanner, bool negative) {
+enum Result scan_integer(struct Scanner *scanner, bool negative) {
     char c = *scanner->stream++;
     if (c == '0' && negative) {
         scanner->err_msg = "zero cannot be negative";
@@ -53,7 +63,7 @@ enum ScanResult scan_integer(struct Scanner *scanner, bool negative) {
     }
 }
 
-enum ScanResult scan_frac(struct Scanner *scanner) {
+enum Result scan_frac(struct Scanner *scanner) {
     if (*scanner->stream++ != '.') {
         scanner->err_msg = "missing '.' in number";
         return RESULT_FAIL;
@@ -70,7 +80,7 @@ enum ScanResult scan_frac(struct Scanner *scanner) {
     return RESULT_OK;
 }
 
-enum ScanResult scan_exp(struct Scanner *scanner) {
+enum Result scan_exp(struct Scanner *scanner) {
     if (*scanner->stream != 'e' && *scanner->stream != 'E') {
         scanner->err_msg = "missing 'e' in number";
         return RESULT_FAIL;
@@ -92,7 +102,7 @@ enum ScanResult scan_exp(struct Scanner *scanner) {
 }
 
 
-enum ScanResult scan_number(struct Scanner *scanner, bool negative) {
+enum Result scan_number(struct Scanner *scanner, bool negative) {
     scanner->curr_token = TOK_NUMBER;
 
     if (scan_integer(scanner, negative) == RESULT_FAIL)
@@ -109,7 +119,33 @@ enum ScanResult scan_number(struct Scanner *scanner, bool negative) {
     return RESULT_OK;
 }
 
-enum ScanResult next(struct Scanner *scanner) {
+enum Result scan_string(struct Scanner *scanner) {
+    scanner->curr_token = TOK_STRING;
+    if (*scanner->stream != '"') {
+        scanner->err_msg = "expected opening '\"'";
+        return RESULT_FAIL;
+    }
+    scanner->stream++;
+
+    while (*scanner->stream && *scanner->stream != '"')
+        scanner->stream++;
+
+    if (*scanner->stream != '"') {
+        scanner->err_msg = "expected closing '\"'";
+        return RESULT_FAIL;
+    }
+    scanner->stream++;
+
+    return RESULT_OK;
+}
+
+enum Result scan_punctuation(struct Scanner *scanner, enum Token tok) {
+    scanner->stream++;
+    scanner->curr_token = tok;
+    return RESULT_OK;
+}
+
+enum Result next(struct Scanner *scanner) {
     skip_spaces(scanner);
     switch (*scanner->stream) {
     case 0:
@@ -117,6 +153,12 @@ enum ScanResult next(struct Scanner *scanner) {
             return RESULT_FAIL;
         scanner->curr_token = TOK_EOF;
         return RESULT_OK;
+
+    case '"':
+        return scan_string(scanner);
+
+    case DIGIT:
+        return scan_number(scanner, false);
 
     case 't':
         return scan_keyword(scanner, "true", TOK_TRUE, "error reading 'true'");
@@ -127,12 +169,27 @@ enum ScanResult next(struct Scanner *scanner) {
     case 'n':
         return scan_keyword(scanner, "null", TOK_NULL, "error reading 'null'");
 
+    case '{':
+        return scan_punctuation(scanner, TOK_LBRACE);
+
+    case '}':
+        return scan_punctuation(scanner, TOK_RBRACE);
+
+    case '[':
+        return scan_punctuation(scanner, TOK_LBRACK);
+
+    case ']':
+        return scan_punctuation(scanner, TOK_RBRACK);
+
+    case ',':
+        return scan_punctuation(scanner, TOK_COMMA);
+
+    case ':':
+        return scan_punctuation(scanner, TOK_COLON);
+
     case '-':
         scanner->stream++;
         return scan_number(scanner, true);
-
-    case DIGIT:
-        return scan_number(scanner, false);
 
     default:
         scanner->err_msg = "unknown character";

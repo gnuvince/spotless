@@ -1,11 +1,11 @@
 /*
  * Useful invariants to know:
- *   - after a scan_*() function successfully returns,
- *     scanner->stream points to the first character after
- *     the sub-string that generated scanner->curr_token;
  *   - next() skips blanks (using isspace()) before dispatching;
  *     scanner->stream points to the first non-blank character
  *     of the rest of the input.
+ *   - after a scan_*() function successfully returns,
+ *     scanner->stream points to the first character after
+ *     the sub-string that generated the token.
  */
 #include <ctype.h>
 #include <stdbool.h>

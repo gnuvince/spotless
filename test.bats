@@ -70,3 +70,5 @@ assert_fail() {
 @test 'string "abc"'        { assert_ok '"abc"'; }
 @test 'string "abc def"'    { assert_ok '"abc def"'; }
 @test 'string "jérôme"'     { assert_ok '"jérôme"'; }
+@test 'string escapes'      { assert_ok '" \\ \/ \b \f \n \r \t "'; }
+@test 'string escapes (invalid)' { assert_fail '" \v \y \x "'; }

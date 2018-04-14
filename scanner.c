@@ -127,8 +127,29 @@ enum Result scan_string(struct Scanner *scanner) {
     }
     scanner->stream++;
 
-    while (*scanner->stream && *scanner->stream != '"')
-        scanner->stream++;
+    bool escape = false;
+    while (*scanner->stream && *scanner->stream != '"') {
+        char c = *scanner->stream++;
+        if (escape) {
+            switch (c) {
+            case '"':
+            case '\\':
+            case '/':
+            case 'b':
+            case 'f':
+            case 'n':
+            case 'r':
+            case 't':
+                escape = false;
+                break;
+            default:
+                scanner->err_msg = "invalid escape sequence";
+                return RESULT_FAIL;
+            }
+        } else {
+            escape = (c == '\\');
+        }
+    }
 
     if (*scanner->stream != '"') {
         scanner->err_msg = "expected closing '\"'";

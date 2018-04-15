@@ -119,6 +119,20 @@ enum Result scan_number(struct Scanner *scanner, bool negative) {
     return RESULT_OK;
 }
 
+bool ishexdigit(char c) {
+    return (c >= '0' && c <= '9')
+        || (c >= 'a' && c <= 'f')
+        || (c >= 'A' && c <= 'F');
+}
+
+enum Result scan_four_hex(struct Scanner *scanner) {
+    if (!ishexdigit(*scanner->stream++)) return RESULT_FAIL;
+    if (!ishexdigit(*scanner->stream++)) return RESULT_FAIL;
+    if (!ishexdigit(*scanner->stream++)) return RESULT_FAIL;
+    if (!ishexdigit(*scanner->stream++)) return RESULT_FAIL;
+    return RESULT_OK;
+}
+
 enum Result scan_string(struct Scanner *scanner) {
     scanner->curr_token = TOK_STRING;
     if (*scanner->stream != '"') {
@@ -140,6 +154,13 @@ enum Result scan_string(struct Scanner *scanner) {
             case 'n':
             case 'r':
             case 't':
+                escape = false;
+                break;
+            case 'u':
+                if (scan_four_hex(scanner) == RESULT_FAIL) {
+                    scanner->err_msg = "invalid escape sequence";
+                    return RESULT_FAIL;
+                }
                 escape = false;
                 break;
             default:

@@ -72,3 +72,4 @@ assert_fail() {
 @test 'string "jérôme"'     { assert_ok '"jérôme"'; }
 @test 'string escapes'      { assert_ok '" \\ \/ \b \f \n \r \t "'; }
 @test 'string escapes (invalid)' { assert_fail '" \v \y \x "'; }
+@test 'string escapes unicode' { assert_ok '" \u0123 \u4567 \u89ab \uCDEF "'; }

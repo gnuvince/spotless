@@ -75,6 +75,23 @@ assert_fail() {
 @test 'string "abc"'        { assert_ok '"abc"'; }
 @test 'string "abc def"'    { assert_ok '"abc def"'; }
 @test 'string "jérôme"'     { assert_ok '"jérôme"'; }
+@test 'string "abc'         { assert_fail '"abc'; }
+@test 'string abc"'         { assert_fail 'abc"'; }
 @test 'string escapes'      { assert_ok '" \\ \/ \b \f \n \r \t "'; }
 @test 'string escapes (invalid)' { assert_fail '" \v \y \x "'; }
 @test 'string escapes unicode' { assert_ok '" \u0123 \u4567 \u89ab \uCDEF "'; }
+@test 'array empty'         { assert_ok '[]'; }
+@test 'array 1'             { assert_ok '[1]'; }
+@test 'array 2'             { assert_ok '[1,2]'; }
+@test 'array 3'             { assert_ok '[1,2,"abc"]'; }
+@test 'array 4'             { assert_ok '[1,2,"abc",[]]'; }
+@test 'array 5'             { assert_ok '[1,2,"abc",[], [2,3,5]]'; }
+@test 'object empty'        { assert_ok '{}'; }
+@test 'object 1'            { assert_ok '{"x": 1}'; }
+@test 'object 2'            { assert_ok '{"x": 1, "y": 2}'; }
+@test 'object 3' {
+    assert_ok '{ "x": 1, "y": 2, "inner": {"z": 3} }';
+}
+@test 'object 4' {
+    assert_ok '{ "x": 1, "y": 2, "inner": {"z": 3}, "array": [2, 3, 5] }';
+}

@@ -13,8 +13,9 @@
 #include "common.h"
 #include "scanner.h"
 
-#define NON_ZERO_DIGIT      \
-         '1':               \
+#define DIGIT               \
+         '0':               \
+    case '1':               \
     case '2':               \
     case '3':               \
     case '4':               \
@@ -24,9 +25,6 @@
     case '8':               \
     case '9'
 
-#define DIGIT               \
-    '0':                    \
-    case NON_ZERO_DIGIT
 
 void skip_spaces(struct Scanner *scanner) {
     while (scanner->stream && isspace(*scanner->stream))

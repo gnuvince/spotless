@@ -6,6 +6,9 @@
  *   - after a scan_*() function successfully returns,
  *     scanner->stream points to the first character after
  *     the sub-string that generated the token.
+ *   - scanner->curr_token is set *before* scanning begins.
+ *     If an error occurs, you can know what kind of token was
+ *     being scanned.
  */
 #include <ctype.h>
 #include <stdbool.h>
@@ -37,13 +40,13 @@ enum Result scan_keyword(
     enum Token tok,
     const char *err_msg)
 {
+    scanner->curr_token = tok;
     while (*keyword) {
         if (*scanner->stream++ != *keyword++) {
             scanner->err_msg = err_msg;
             return RESULT_FAIL;
         }
     }
-    scanner->curr_token = tok;
     return RESULT_OK;
 }
 

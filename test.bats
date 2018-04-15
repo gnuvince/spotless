@@ -66,6 +66,11 @@ assert_fail() {
 @test "number '1.1234E+10'" { assert_ok '1.1234E+10'; }
 @test "number '1.1234e-10'" { assert_ok '1.1234e-10'; }
 @test "number '1.1234E-10'" { assert_ok '1.1234E-10'; }
+@test "number '12.'"        { assert_fail '12.'; }
+@test "number '.12'"        { assert_fail '.12'; }
+@test "number '1e'"         { assert_fail '1e'; }
+@test "number '1e-'"        { assert_fail '1e-'; }
+@test "number '1e+'"        { assert_fail '1e+'; }
 @test 'string ""'           { assert_ok '""'; }
 @test 'string "abc"'        { assert_ok '"abc"'; }
 @test 'string "abc def"'    { assert_ok '"abc def"'; }

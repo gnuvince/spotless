@@ -29,12 +29,12 @@
     case '9'
 
 
-void skip_spaces(struct Scanner *scanner) {
+static void skip_spaces(struct Scanner *scanner) {
     while (scanner->stream && isspace(*scanner->stream))
         (scanner->stream)++;
 }
 
-enum Result scan_keyword(
+static enum Result scan_keyword(
     struct Scanner *scanner,
     char *keyword,
     enum Token tok,
@@ -50,7 +50,7 @@ enum Result scan_keyword(
     return RESULT_OK;
 }
 
-enum Result scan_integer(struct Scanner *scanner, bool negative) {
+static enum Result scan_integer(struct Scanner *scanner, bool negative) {
     char c = *scanner->stream++;
     if (c == '0' && negative) {
         scanner->err_msg = "zero cannot be negative";
@@ -64,7 +64,7 @@ enum Result scan_integer(struct Scanner *scanner, bool negative) {
     }
 }
 
-enum Result scan_frac(struct Scanner *scanner) {
+static enum Result scan_frac(struct Scanner *scanner) {
     if (*scanner->stream++ != '.') {
         scanner->err_msg = "missing '.' in number";
         return RESULT_FAIL;
@@ -81,7 +81,7 @@ enum Result scan_frac(struct Scanner *scanner) {
     return RESULT_OK;
 }
 
-enum Result scan_exp(struct Scanner *scanner) {
+static enum Result scan_exp(struct Scanner *scanner) {
     if (*scanner->stream != 'e' && *scanner->stream != 'E') {
         scanner->err_msg = "missing 'e' in number";
         return RESULT_FAIL;
@@ -103,7 +103,7 @@ enum Result scan_exp(struct Scanner *scanner) {
 }
 
 
-enum Result scan_number(struct Scanner *scanner, bool negative) {
+static enum Result scan_number(struct Scanner *scanner, bool negative) {
     scanner->curr_token = TOK_NUMBER;
 
     if (scan_integer(scanner, negative) == RESULT_FAIL)
@@ -120,13 +120,13 @@ enum Result scan_number(struct Scanner *scanner, bool negative) {
     return RESULT_OK;
 }
 
-bool ishexdigit(char c) {
+static bool ishexdigit(char c) {
     return (c >= '0' && c <= '9')
         || (c >= 'a' && c <= 'f')
         || (c >= 'A' && c <= 'F');
 }
 
-enum Result scan_four_hex(struct Scanner *scanner) {
+static enum Result scan_four_hex(struct Scanner *scanner) {
     if (!ishexdigit(*scanner->stream++)) return RESULT_FAIL;
     if (!ishexdigit(*scanner->stream++)) return RESULT_FAIL;
     if (!ishexdigit(*scanner->stream++)) return RESULT_FAIL;
@@ -134,7 +134,7 @@ enum Result scan_four_hex(struct Scanner *scanner) {
     return RESULT_OK;
 }
 
-enum Result scan_string(struct Scanner *scanner) {
+static enum Result scan_string(struct Scanner *scanner) {
     scanner->curr_token = TOK_STRING;
     if (*scanner->stream != '"') {
         scanner->err_msg = "expected opening '\"'";
@@ -182,7 +182,7 @@ enum Result scan_string(struct Scanner *scanner) {
     return RESULT_OK;
 }
 
-enum Result scan_punctuation(struct Scanner *scanner, enum Token tok) {
+static enum Result scan_punctuation(struct Scanner *scanner, enum Token tok) {
     scanner->stream++;
     scanner->curr_token = tok;
     return RESULT_OK;

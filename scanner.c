@@ -136,10 +136,10 @@ static bool ishexdigit(char c) {
 }
 
 static enum Result scan_four_hex(struct Scanner *scanner) {
-    if (!ishexdigit(*scanner->stream++)) return RESULT_FAIL;
-    if (!ishexdigit(*scanner->stream++)) return RESULT_FAIL;
-    if (!ishexdigit(*scanner->stream++)) return RESULT_FAIL;
-    if (!ishexdigit(*scanner->stream++)) return RESULT_FAIL;
+    if (!ishexdigit(*++scanner->stream)) return RESULT_FAIL;
+    if (!ishexdigit(*++scanner->stream)) return RESULT_FAIL;
+    if (!ishexdigit(*++scanner->stream)) return RESULT_FAIL;
+    if (!ishexdigit(*++scanner->stream)) return RESULT_FAIL;
     return RESULT_OK;
 }
 
@@ -152,8 +152,12 @@ static enum Result scan_string(struct Scanner *scanner) {
     scanner->stream++;
 
     bool escape = false;
-    while (*scanner->stream && *scanner->stream != '"') {
-        char c = *scanner->stream++;
+    while (*scanner->stream) {
+        char c = *scanner->stream;
+
+        if (!escape && c == '"')
+            break;
+
         if (escape) {
             switch (c) {
             case '"':
@@ -168,7 +172,7 @@ static enum Result scan_string(struct Scanner *scanner) {
                 break;
             case 'u':
                 if (scan_four_hex(scanner) == RESULT_FAIL) {
-                    scanner->err_msg = "invalid escape sequence";
+                    scanner->err_msg = "invalid unicode escape sequence";
                     return RESULT_FAIL;
                 }
                 escape = false;
@@ -180,6 +184,8 @@ static enum Result scan_string(struct Scanner *scanner) {
         } else {
             escape = (c == '\\');
         }
+
+        scanner->stream++;
     }
 
     if (*scanner->stream != '"') {

@@ -30,7 +30,7 @@
 
 
 static void skip_spaces(struct Scanner *scanner) {
-    while (scanner->stream && isspace(*scanner->stream))
+    while (*scanner->stream && isspace(*scanner->stream))
         (scanner->stream)++;
 }
 
@@ -58,7 +58,7 @@ static enum Result scan_integer(struct Scanner *scanner, bool negative) {
     } else if (c == '0') {
         return RESULT_OK;
     } else {
-        while (scanner->stream && isdigit(*scanner->stream))
+        while (*scanner->stream && isdigit(*scanner->stream))
             scanner->stream++;
         return RESULT_OK;
     }

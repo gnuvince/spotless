@@ -1,5 +1,5 @@
 CC=gcc
-CFLAGS=-g -O0 -Wall -Wextra  -pedantic -std=c99 -c
+CFLAGS=-g -O2 -Wall -Wextra  -pedantic -std=c99 -c
 
 all: spotless
 

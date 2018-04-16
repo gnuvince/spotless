@@ -9,6 +9,23 @@
 
 #define BUFSIZE 65536
 
+int spotless_readline(char *buf, size_t bufsize) {
+    int read = 0;
+    while (1) {
+        if (bufsize == 0)
+            break;
+
+        int c = getchar();
+        if (c == '\n') {
+            *buf = 0;
+            break;
+        }
+        *buf++ = c;
+        read++;
+        bufsize--;
+    }
+    return read;
+}
 
 int main_scan(void) {
     char buf[BUFSIZE];
@@ -31,18 +48,24 @@ int main_parse(void) {
     struct Scanner scanner;
     struct Parser parser;
 
-    fread(buf, sizeof(char), BUFSIZE, stdin);
 
-    scanner.err_msg = NULL;
-    scanner.stream = buf;
-    scanner.curr_token = TOK_NONE;
+    while (1) {
+        spotless_readline(buf, BUFSIZE);
 
-    parser.err_msg = NULL;
-    parser.scanner = &scanner;
-    parser.curr_token = TOK_NONE;
+        if (feof(stdin))
+            break;
 
-    if (spotless_parser_parse(&parser) == RESULT_FAIL)
-        errx(1, "%s", parser.err_msg);
+        scanner.err_msg = NULL;
+        scanner.stream = buf;
+        scanner.curr_token = TOK_NONE;
+
+        parser.err_msg = NULL;
+        parser.scanner = &scanner;
+        parser.curr_token = TOK_NONE;
+
+        if (spotless_parser_parse(&parser) == RESULT_FAIL)
+            errx(1, "%s", parser.err_msg);
+    }
     return 0;
 }
 

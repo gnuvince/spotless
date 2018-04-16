@@ -50,16 +50,15 @@ static enum Result scan_keyword(
     return RESULT_OK;
 }
 
-static enum Result scan_integer(struct Scanner *scanner, bool negative) {
+static enum Result scan_integer(struct Scanner *scanner, bool *was_zero) {
     char c = *scanner->stream++;
-    if (c == '0' && negative) {
-        scanner->err_msg = "zero cannot be negative";
-        return RESULT_FAIL;
-    } else if (c == '0') {
+    if (c == '0') {
+        *was_zero = true;
         return RESULT_OK;
     } else {
         while (*scanner->stream && isdigit(*scanner->stream))
             scanner->stream++;
+        *was_zero = false;
         return RESULT_OK;
     }
 }
@@ -106,16 +105,26 @@ static enum Result scan_exp(struct Scanner *scanner) {
 static enum Result scan_number(struct Scanner *scanner, bool negative) {
     scanner->curr_token = TOK_NUMBER;
 
-    if (scan_integer(scanner, negative) == RESULT_FAIL)
+    bool was_zero;
+    if (scan_integer(scanner, &was_zero) == RESULT_FAIL)
         return RESULT_FAIL;
 
-    if (*scanner->stream == '.')
+    if (*scanner->stream == '.') {
         if (scan_frac(scanner) == RESULT_FAIL)
             return RESULT_FAIL;
+        was_zero = false;
+    }
 
-    if (*scanner->stream == 'E' || *scanner->stream == 'e')
+    if (*scanner->stream == 'E' || *scanner->stream == 'e') {
         if (scan_exp(scanner) == RESULT_FAIL)
             return RESULT_FAIL;
+        was_zero = false;
+    }
+
+    if (was_zero && negative) {
+        scanner->err_msg = "zero cannot be negative";
+        return RESULT_FAIL;
+    }
 
     return RESULT_OK;
 }

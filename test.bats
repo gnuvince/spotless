@@ -3,13 +3,12 @@
 
 
 assert_ok() {
-    printf '%s' "$1" | ./spotless parse
+    printf '%s' "$1" | ./spotless scan
 }
 
 assert_fail() {
     ! assert_ok "$1"
 }
-
 
 @test "true keyword"        { assert_ok 'true'; }
 @test "false keyword"       { assert_ok 'false'; }
@@ -66,6 +65,10 @@ assert_fail() {
 @test "number '1.1234E+10'" { assert_ok '1.1234E+10'; }
 @test "number '1.1234e-10'" { assert_ok '1.1234e-10'; }
 @test "number '1.1234E-10'" { assert_ok '1.1234E-10'; }
+@test "number '-0.2'"       { assert_ok '-0.2'; }
+@test "number '-0.2e-3'"    { assert_ok '-0.2e-3'; }
+@test "number '-0.2e+3'"    { assert_ok '-0.2e+3'; }
+@test "number '-0.2e3'"     { assert_ok '-0.2e3'; }
 @test "number '12.'"        { assert_fail '12.'; }
 @test "number '.12'"        { assert_fail '.12'; }
 @test "number '1e'"         { assert_fail '1e'; }

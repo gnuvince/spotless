@@ -31,6 +31,6 @@ struct Scanner {
     const char *err_msg;
 };
 
-enum Result next(struct Scanner *);
+enum Result spotless_scanner_next(struct Scanner *);
 
 #endif

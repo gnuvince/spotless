@@ -3,7 +3,7 @@
 
 
 assert_ok() {
-    printf '%s' "$1" | ./spotless
+    printf '%s' "$1" | ./spotless parse
 }
 
 assert_fail() {

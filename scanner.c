@@ -188,12 +188,14 @@ static enum Result scan_punctuation(struct Scanner *scanner, enum Token tok) {
     return RESULT_OK;
 }
 
-enum Result next(struct Scanner *scanner) {
+enum Result spotless_scanner_next(struct Scanner *scanner) {
     skip_spaces(scanner);
     switch (*scanner->stream) {
     case 0:
-        if (scanner->curr_token == TOK_NONE)
+        if (scanner->curr_token == TOK_NONE) {
+            scanner->err_msg = "no token";
             return RESULT_FAIL;
+        }
         scanner->curr_token = TOK_EOF;
         return RESULT_OK;
 

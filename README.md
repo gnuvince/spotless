@@ -37,3 +37,8 @@ Testing requires the [bats](https://github.com/sstephenson/bats) testing framewo
 $ chmod +x test.bats
 $ ./test.bats
 ```
+
+Caveats
+-------
+
+- Spotless does not currently ensure that strings are well-formed UTF-8 sequences.

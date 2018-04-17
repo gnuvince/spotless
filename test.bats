@@ -1,9 +1,7 @@
 #!/usr/bin/env bats
 
-
-
 assert_ok() {
-    printf '%s' "$1" | ./spotless scan
+    printf '%s\n' "$1" | ./spotless
 }
 
 assert_fail() {

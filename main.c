@@ -9,23 +9,7 @@
 
 #define BUFSIZE 65536
 
-int main_scan(void) {
-    char buf[BUFSIZE];
-    struct Scanner scanner;
-
-    fread(buf, sizeof(char), BUFSIZE, stdin);
-
-    scanner.err_msg = NULL;
-    scanner.stream = buf;
-
-    while (scanner.curr_token != TOK_EOF) {
-        if (spotless_scanner_next(&scanner) == RESULT_FAIL)
-            errx(1, "%s", scanner.err_msg);
-    }
-    return 0;
-}
-
-int main_parse(void) {
+int main(void) {
     char buf[BUFSIZE];
     struct Scanner scanner;
     struct Parser parser;
@@ -59,17 +43,4 @@ int main_parse(void) {
             errx(1, "%s", parser.err_msg);
     }
     return 0;
-}
-
-
-int main(int argc, char **argv) {
-    if (argc != 2)
-        errx(1, "usage: spotless <scan | parse>");
-
-    if (strcmp(argv[1], "scan") == 0)
-        return main_scan();
-    else if (strcmp(argv[1], "parse") == 0)
-        return main_parse();
-    else
-        errx(1, "usage: spotless <scan | parse>");
 }

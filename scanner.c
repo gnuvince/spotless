@@ -12,6 +12,7 @@
  */
 #include <ctype.h>
 #include <stdbool.h>
+#include <string.h>
 
 #include "common.h"
 #include "scanner.h"
@@ -28,75 +29,85 @@
     case '8':               \
     case '9'
 
+static char advance(struct Scanner *scanner) {
+    return *scanner->stream++;
+}
+
+static char peek(struct Scanner *scanner) {
+    return *scanner->stream;
+}
 
 static void skip_spaces(struct Scanner *scanner) {
-    while (*scanner->stream && isspace(*scanner->stream))
-        (scanner->stream)++;
+    while (isspace(peek(scanner)))
+        (void) advance(scanner);
 }
 
 static enum Result scan_keyword(
     struct Scanner *scanner,
     char *keyword,
+    size_t keyword_len,
     enum Token tok,
     const char *err_msg)
 {
     scanner->curr_token = tok;
-    while (*keyword) {
-        if (*scanner->stream++ != *keyword++) {
-            scanner->err_msg = err_msg;
-            return RESULT_FAIL;
-        }
+    if (memcmp(scanner->stream, keyword, keyword_len) == 0) {
+        scanner->stream += keyword_len;
+        return RESULT_OK;
     }
-    return RESULT_OK;
+    else {
+        scanner->err_msg = err_msg;
+        return RESULT_FAIL;
+    }
 }
 
 static enum Result scan_integer(struct Scanner *scanner, bool *was_zero) {
-    char c = *scanner->stream++;
+    char c = advance(scanner);
     if (c == '0') {
         *was_zero = true;
         return RESULT_OK;
     } else {
-        while (*scanner->stream && isdigit(*scanner->stream))
-            scanner->stream++;
+        while (isdigit(peek(scanner)))
+            (void) advance(scanner);
         *was_zero = false;
         return RESULT_OK;
     }
 }
 
 static enum Result scan_frac(struct Scanner *scanner) {
-    if (*scanner->stream++ != '.') {
+    if (advance(scanner) != '.') {
         scanner->err_msg = "missing '.' in number";
         return RESULT_FAIL;
     }
 
-    if (!isdigit(*scanner->stream)) {
+    if (!isdigit(peek(scanner))) {
         scanner->err_msg = "missing fractional part";
         return RESULT_FAIL;
     }
 
-    while (*scanner->stream && isdigit(*scanner->stream))
-        scanner->stream++;
+    while (isdigit(peek(scanner)))
+        (void) advance(scanner);
 
     return RESULT_OK;
 }
 
 static enum Result scan_exp(struct Scanner *scanner) {
-    if (*scanner->stream != 'e' && *scanner->stream != 'E') {
+    char c = advance(scanner);
+    if (c != 'e' && c != 'E') {
         scanner->err_msg = "missing 'e' in number";
         return RESULT_FAIL;
     }
-    scanner->stream++;
 
-    if (*scanner->stream == '+' || *scanner->stream == '-')
-        scanner->stream++;
+    c = peek(scanner);
+    if (c == '+' || c == '-')
+        (void) advance(scanner);
 
-    if (!isdigit(*scanner->stream)) {
+    if (!isdigit(peek(scanner))) {
         scanner->err_msg = "missing exponent part";
         return RESULT_FAIL;
     }
 
-    while (*scanner->stream && isdigit(*scanner->stream))
-        scanner->stream++;
+    while (isdigit(peek(scanner)))
+        (void) advance(scanner);
 
     return RESULT_OK;
 }
@@ -109,13 +120,15 @@ static enum Result scan_number(struct Scanner *scanner, bool negative) {
     if (scan_integer(scanner, &was_zero) == RESULT_FAIL)
         return RESULT_FAIL;
 
-    if (*scanner->stream == '.') {
+    char c = peek(scanner);
+    if (c == '.') {
         if (scan_frac(scanner) == RESULT_FAIL)
             return RESULT_FAIL;
         was_zero = false;
     }
 
-    if (*scanner->stream == 'E' || *scanner->stream == 'e') {
+    c = peek(scanner);
+    if (c == 'E' || c == 'e') {
         if (scan_exp(scanner) == RESULT_FAIL)
             return RESULT_FAIL;
         was_zero = false;
@@ -136,76 +149,71 @@ static bool ishexdigit(char c) {
 }
 
 static enum Result scan_four_hex(struct Scanner *scanner) {
-    if (!ishexdigit(*++scanner->stream)) return RESULT_FAIL;
-    if (!ishexdigit(*++scanner->stream)) return RESULT_FAIL;
-    if (!ishexdigit(*++scanner->stream)) return RESULT_FAIL;
-    if (!ishexdigit(*++scanner->stream)) return RESULT_FAIL;
+    if (!ishexdigit(advance(scanner))) return RESULT_FAIL;
+    if (!ishexdigit(advance(scanner))) return RESULT_FAIL;
+    if (!ishexdigit(advance(scanner))) return RESULT_FAIL;
+    if (!ishexdigit(advance(scanner))) return RESULT_FAIL;
     return RESULT_OK;
+}
+
+static enum Result scan_escape_sequence(struct Scanner *scanner) {
+    switch (peek(scanner)) {
+    case '"':
+    case '\\':
+    case '/':
+    case 'b':
+    case 'f':
+    case 'n':
+    case 'r':
+    case 't':
+        (void) advance(scanner);
+        return RESULT_OK;
+    case 'u':
+        (void) advance(scanner);
+        if (scan_four_hex(scanner) == RESULT_FAIL) {
+            scanner->err_msg = "invalid unicode escape sequence";
+            return RESULT_FAIL;
+        }
+        else {
+            return RESULT_OK;
+        }
+    default:
+        scanner->err_msg = "invalid escape sequence";
+        return RESULT_FAIL;
+    }
 }
 
 static enum Result scan_string(struct Scanner *scanner) {
     scanner->curr_token = TOK_STRING;
-    if (*scanner->stream != '"') {
+    if (advance(scanner) != '"') {
         scanner->err_msg = "expected opening '\"'";
         return RESULT_FAIL;
     }
-    scanner->stream++;
 
-    bool escape = false;
-    while (*scanner->stream) {
-        char c = *scanner->stream;
-
-        if (!escape && c == '"')
-            break;
-
-        if (escape) {
-            switch (c) {
-            case '"':
-            case '\\':
-            case '/':
-            case 'b':
-            case 'f':
-            case 'n':
-            case 'r':
-            case 't':
-                escape = false;
-                break;
-            case 'u':
-                if (scan_four_hex(scanner) == RESULT_FAIL) {
-                    scanner->err_msg = "invalid unicode escape sequence";
-                    return RESULT_FAIL;
-                }
-                escape = false;
-                break;
-            default:
-                scanner->err_msg = "invalid escape sequence";
-                return RESULT_FAIL;
-            }
-        } else {
-            escape = (c == '\\');
+    char c;
+    while ((c = advance(scanner)) != '"') {
+        if (c == '\\' && scan_escape_sequence(scanner) == RESULT_FAIL) {
+            return RESULT_FAIL;
         }
-
-        scanner->stream++;
     }
 
-    if (*scanner->stream != '"') {
+    if (c != '"') {
         scanner->err_msg = "expected closing '\"'";
         return RESULT_FAIL;
     }
-    scanner->stream++;
 
     return RESULT_OK;
 }
 
 static enum Result scan_punctuation(struct Scanner *scanner, enum Token tok) {
-    scanner->stream++;
+    (void) advance(scanner);
     scanner->curr_token = tok;
     return RESULT_OK;
 }
 
 enum Result spotless_scanner_next(struct Scanner *scanner) {
     skip_spaces(scanner);
-    switch (*scanner->stream) {
+    switch (peek(scanner)) {
     case 0:
         if (scanner->curr_token == TOK_NONE) {
             scanner->err_msg = "no token";
@@ -221,13 +229,13 @@ enum Result spotless_scanner_next(struct Scanner *scanner) {
         return scan_number(scanner, false);
 
     case 't':
-        return scan_keyword(scanner, "true", TOK_TRUE, "error reading 'true'");
+        return scan_keyword(scanner, "true", 4, TOK_TRUE, "error reading 'true'");
 
     case 'f':
-        return scan_keyword(scanner, "false", TOK_FALSE, "error reading 'false'");
+        return scan_keyword(scanner, "false", 5, TOK_FALSE, "error reading 'false'");
 
     case 'n':
-        return scan_keyword(scanner, "null", TOK_NULL, "error reading 'null'");
+        return scan_keyword(scanner, "null", 4, TOK_NULL, "error reading 'null'");
 
     case '{':
         return scan_punctuation(scanner, TOK_LBRACE);
@@ -248,7 +256,7 @@ enum Result spotless_scanner_next(struct Scanner *scanner) {
         return scan_punctuation(scanner, TOK_COLON);
 
     case '-':
-        scanner->stream++;
+        (void) advance(scanner);
         return scan_number(scanner, true);
 
     default:

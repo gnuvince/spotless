@@ -9,24 +9,6 @@
 
 #define BUFSIZE 65536
 
-int spotless_readline(char *buf, size_t bufsize) {
-    int read = 0;
-    while (1) {
-        if (bufsize == 0)
-            break;
-
-        int c = getchar();
-        if (c == '\n') {
-            *buf = 0;
-            break;
-        }
-        *buf++ = c;
-        read++;
-        bufsize--;
-    }
-    return read;
-}
-
 int main_scan(void) {
     char buf[BUFSIZE];
     struct Scanner scanner;
@@ -50,10 +32,20 @@ int main_parse(void) {
 
 
     while (1) {
-        spotless_readline(buf, BUFSIZE);
+        if (fgets(buf, BUFSIZE, stdin) == NULL) {
+            if (feof(stdin))
+                break;
+            err(1, "fgets");
+        }
 
-        if (feof(stdin))
-            break;
+        char *p;
+        if ((p = strchr(buf, '\n')) == NULL) {
+            warnx("line too long, skipping");
+            while (getchar() != '\n')
+                ;
+            continue;
+        }
+        *p = '\0';
 
         scanner.err_msg = NULL;
         scanner.stream = buf;

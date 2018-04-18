@@ -37,6 +37,10 @@ static char peek(struct Scanner *scanner) {
     return *scanner->stream;
 }
 
+static bool eof(struct Scanner *scanner) {
+    return peek(scanner) == 0;
+}
+
 static void skip_spaces(struct Scanner *scanner) {
     while (isspace(peek(scanner)))
         (void) advance(scanner);
@@ -191,7 +195,7 @@ static enum Result scan_string(struct Scanner *scanner) {
     }
 
     char c;
-    while ((c = advance(scanner)) != '"') {
+    while (!eof(scanner) && (c = advance(scanner)) != '"') {
         if (c == '\\' && scan_escape_sequence(scanner) == RESULT_FAIL) {
             return RESULT_FAIL;
         }

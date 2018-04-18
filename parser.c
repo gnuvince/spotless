@@ -4,14 +4,6 @@
 #include "scanner.h"
 #include "parser.h"
 
-#define TRY_ADVANCE()                                       \
-    do {                                                    \
-        if (advance(parser) == RESULT_FAIL) {               \
-                parser->err_msg = parser->scanner->err_msg; \
-                return RESULT_FAIL;                         \
-        }                                                   \
-    } while (0)
-
 static enum Result advance(struct Parser *parser) {
     if (spotless_scanner_next(parser->scanner) == RESULT_FAIL) {
         parser->err_msg = parser->scanner->err_msg;
@@ -28,13 +20,13 @@ static enum Result parse_pair(struct Parser *parser) {
         parser->err_msg = "expected a string key";
         return RESULT_FAIL;
     }
-    TRY_ADVANCE();
+    if (advance(parser) == RESULT_FAIL) return RESULT_FAIL;
 
     if (parser->curr_token != TOK_COLON) {
         parser->err_msg = "expected a ':'";
         return RESULT_FAIL;
     }
-    TRY_ADVANCE();
+    if (advance(parser) == RESULT_FAIL) return RESULT_FAIL;
 
     if (parse_value(parser) == RESULT_FAIL) {
         return RESULT_FAIL;
@@ -47,11 +39,11 @@ static enum Result parse_rest_object(struct Parser *parser) {
     while (parser->curr_token != TOK_EOF) {
         switch (parser->curr_token) {
         case TOK_RBRACE:
-            TRY_ADVANCE();
+            if (advance(parser) == RESULT_FAIL) return RESULT_FAIL;
             return RESULT_OK;
 
         case TOK_COMMA:
-            TRY_ADVANCE();
+            if (advance(parser) == RESULT_FAIL) return RESULT_FAIL;
             if (parse_pair(parser) == RESULT_FAIL)
                 return RESULT_FAIL;
             break;
@@ -66,11 +58,11 @@ static enum Result parse_rest_object(struct Parser *parser) {
 }
 
 static enum Result parse_object(struct Parser *parser) {
-    TRY_ADVANCE(); // skip '{'
+    if (advance(parser) == RESULT_FAIL) return RESULT_FAIL;
     switch (parser->curr_token) {
     case TOK_RBRACE:
         /* Empty object */
-        TRY_ADVANCE();
+        if (advance(parser) == RESULT_FAIL) return RESULT_FAIL;
         return RESULT_OK;
 
     case TOK_STRING:
@@ -89,11 +81,11 @@ static enum Result parse_rest_of_array(struct Parser *parser) {
     while (parser->curr_token != TOK_EOF) {
         switch (parser->curr_token) {
         case TOK_RBRACK:
-            TRY_ADVANCE();
+            if (advance(parser) == RESULT_FAIL) return RESULT_FAIL;
             return RESULT_OK;
 
         case TOK_COMMA:
-            TRY_ADVANCE();
+            if (advance(parser) == RESULT_FAIL) return RESULT_FAIL;
             if (parse_value(parser) == RESULT_FAIL)
                 return RESULT_FAIL;
             break;
@@ -108,11 +100,11 @@ static enum Result parse_rest_of_array(struct Parser *parser) {
 }
 
 static enum Result parse_array(struct Parser *parser) {
-    TRY_ADVANCE(); // skip '['
+    if (advance(parser) == RESULT_FAIL) return RESULT_FAIL;
     switch (parser->curr_token) {
     case TOK_RBRACK:
         /* Empty array */
-        TRY_ADVANCE();
+        if (advance(parser) == RESULT_FAIL) return RESULT_FAIL;
         return RESULT_OK;
 
     case TOK_NUMBER:
@@ -139,7 +131,7 @@ static enum Result parse_value(struct Parser *parser) {
     case TOK_FALSE:
     case TOK_TRUE:
     case TOK_NULL:
-        TRY_ADVANCE();
+        if (advance(parser) == RESULT_FAIL) return RESULT_FAIL;
         return RESULT_OK;
 
    case TOK_LBRACE:

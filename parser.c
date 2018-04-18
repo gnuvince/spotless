@@ -13,26 +13,22 @@ static enum Result advance(struct Parser *parser) {
     return RESULT_OK;
 }
 
+static enum Result eat(struct Parser *parser, enum Token tok, const char *err_msg) {
+    if (parser->curr_token != tok) {
+        parser->err_msg = err_msg;
+        return RESULT_FAIL;
+    }
+    return advance(parser);
+}
+
 static enum Result parse_value(struct Parser *);
 
 static enum Result parse_pair(struct Parser *parser) {
-    if (parser->curr_token != TOK_STRING) {
-        parser->err_msg = "expected a string key";
+    if (eat(parser, TOK_STRING, "expected a string key") == RESULT_FAIL)
         return RESULT_FAIL;
-    }
-    if (advance(parser) == RESULT_FAIL) return RESULT_FAIL;
-
-    if (parser->curr_token != TOK_COLON) {
-        parser->err_msg = "expected a ':'";
+    if (eat(parser, TOK_COLON, "expected ':'") == RESULT_FAIL)
         return RESULT_FAIL;
-    }
-    if (advance(parser) == RESULT_FAIL) return RESULT_FAIL;
-
-    if (parse_value(parser) == RESULT_FAIL) {
-        return RESULT_FAIL;
-    }
-
-    return RESULT_OK;
+    return parse_value(parser);
 }
 
 static enum Result parse_rest_object(struct Parser *parser) {
@@ -62,8 +58,7 @@ static enum Result parse_object(struct Parser *parser) {
     switch (parser->curr_token) {
     case TOK_RBRACE:
         /* Empty object */
-        if (advance(parser) == RESULT_FAIL) return RESULT_FAIL;
-        return RESULT_OK;
+        return advance(parser);
 
     case TOK_STRING:
         if (parse_pair(parser) == RESULT_FAIL) {
@@ -81,8 +76,7 @@ static enum Result parse_rest_of_array(struct Parser *parser) {
     while (parser->curr_token != TOK_EOF) {
         switch (parser->curr_token) {
         case TOK_RBRACK:
-            if (advance(parser) == RESULT_FAIL) return RESULT_FAIL;
-            return RESULT_OK;
+            return advance(parser);
 
         case TOK_COMMA:
             if (advance(parser) == RESULT_FAIL) return RESULT_FAIL;
@@ -104,8 +98,7 @@ static enum Result parse_array(struct Parser *parser) {
     switch (parser->curr_token) {
     case TOK_RBRACK:
         /* Empty array */
-        if (advance(parser) == RESULT_FAIL) return RESULT_FAIL;
-        return RESULT_OK;
+        return advance(parser);
 
     case TOK_NUMBER:
     case TOK_STRING:
@@ -131,8 +124,7 @@ static enum Result parse_value(struct Parser *parser) {
     case TOK_FALSE:
     case TOK_TRUE:
     case TOK_NULL:
-        if (advance(parser) == RESULT_FAIL) return RESULT_FAIL;
-        return RESULT_OK;
+        return advance(parser);
 
    case TOK_LBRACE:
         return parse_object(parser);
@@ -153,8 +145,5 @@ enum Result spotless_parser_parse(struct Parser *parser) {
     if (parse_value(parser) == RESULT_FAIL)
         return RESULT_FAIL;
 
-    if (parser->scanner->curr_token == TOK_EOF)
-        return RESULT_OK;
-    else
-        return RESULT_FAIL;
+    return eat(parser, TOK_EOF, "expected EOF");
 }

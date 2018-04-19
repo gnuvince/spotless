@@ -10,18 +10,18 @@
 #define BUFSIZE 65536
 
 int verify_json(char *s) {
-   struct Scanner scanner;
-   struct Parser parser;
+    struct Scanner scanner;
+    struct Parser parser;
 
-   scanner.err_msg = NULL;
-   scanner.stream = s;
-   scanner.curr_token = TOK_NONE;
+    scanner.err_msg = NULL;
+    scanner.stream = s;
+    scanner.curr_token = TOK_NONE;
 
-   parser.err_msg = NULL;
-   parser.scanner = &scanner;
-   parser.curr_token = TOK_NONE;
+    parser.err_msg = NULL;
+    parser.scanner = &scanner;
+    parser.curr_token = TOK_NONE;
 
-   return spotless_parser_parse(&parser);
+    return spotless_parser_parse(&parser);
 }
 
 
@@ -46,16 +46,16 @@ int main(void) {
         }
         *p = '\0';
 
-	scanner.err_msg = NULL;
-	scanner.stream = buf;
-	scanner.curr_token = TOK_NONE;
+        scanner.err_msg = NULL;
+        scanner.stream = buf;
+        scanner.curr_token = TOK_NONE;
 
-	parser.err_msg = NULL;
-	parser.scanner = &scanner;
-	parser.curr_token = TOK_NONE;
+        parser.err_msg = NULL;
+        parser.scanner = &scanner;
+        parser.curr_token = TOK_NONE;
 
-	if (spotless_parser_parse(&parser) == RESULT_FAIL)
-	    errx(1, "%s", parser.err_msg);
+        if (spotless_parser_parse(&parser) == RESULT_FAIL)
+            errx(1, "%s", parser.err_msg);
     }
     return 0;
 }

@@ -1,5 +1,3 @@
-#include <stdlib.h>
-
 #include "common.h"
 #include "scanner.h"
 #include "parser.h"
